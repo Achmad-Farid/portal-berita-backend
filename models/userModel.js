@@ -10,6 +10,7 @@ const UserSchema = mongoose.Schema({
     required: true,
     default: false,
   },
+  role: { type: String, default: "user" },
 });
 UserSchema.methods.generateVerificationToken = function () {
   const user = this;

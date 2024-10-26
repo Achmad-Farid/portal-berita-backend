@@ -28,7 +28,7 @@ const transporter = nodemailer.createTransport({
 
 // fungsi register
 exports.signup = async (req, res) => {
-  const { email, username, name, password } = req.body;
+  const { email, username, password } = req.body;
 
   try {
     // Check if the email is in use
