@@ -5,11 +5,6 @@ const UserSchema = mongoose.Schema({
   email: String,
   username: String,
   password: String,
-  verified: {
-    type: Boolean,
-    required: true,
-    default: false,
-  },
   role: { type: String, default: "user" },
 });
 UserSchema.methods.generateVerificationToken = function () {

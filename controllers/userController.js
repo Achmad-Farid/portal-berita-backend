@@ -1,30 +1,9 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
-const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
 const User = require("../models/userModel.js");
 const bcrypt = require("bcrypt");
-
-const { google } = require("googleapis");
-
-const oAuth2Client = new google.auth.OAuth2(
-  process.env.CLIENT_ID,
-  process.env.CLIENT_SECRET,
-  process.env.REDIRECT_URI // Sesuaikan dengan redirect URI Anda jika diperlukan
-);
-oAuth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
-
-const transporter = nodemailer.createTransport({
-  service: "Gmail",
-  auth: {
-    type: "OAuth2",
-    user: process.env.EMAIL_USERNAME,
-    clientId: process.env.CLIENT_ID,
-    clientSecret: process.env.CLIENT_SECRET,
-    refreshToken: process.env.REFRESH_TOKEN,
-    accessToken: oAuth2Client.getAccessToken(),
-  },
-});
+const passport = require("passport");
 
 // fungsi register
 exports.signup = async (req, res) => {
@@ -54,17 +33,7 @@ exports.signup = async (req, res) => {
       username: username,
       password: hashedPassword,
     }).save();
-    // Step 2 - Generate a verification token with the user's ID
-    const verificationToken = user.generateVerificationToken();
-    // Step 3 - Email the user a unique verification link
-    const url = `https:/portal-berita/${verificationToken}`;
-    transporter.sendMail({
-      to: email,
-      subject: "Verify Your Account",
-      html: `
-          <p style="word-break: break-all;"><a href="${url}">${url}</a></p>
-      `,
-    });
+
     return res.status(201).send({
       message: `Sent a verification email to ${email}`,
     });
@@ -115,37 +84,19 @@ exports.login = async (req, res) => {
   }
 };
 
-// fungsi verify email
-exports.verify = async (req, res) => {
-  const { token } = req.params;
-  // Check we have an id
-  if (!token) {
-    return res.status(422).send({
-      message: "Missing Token",
-    });
-  }
-  // Step 1 -  Verify the token from the URL
-  let payload = null;
-  try {
-    payload = jwt.verify(token, process.env.USER_VERIFICATION_TOKEN_SECRET);
-  } catch (err) {
-    return res.status(500).send(err);
-  }
-  try {
-    // Step 2 - Find user with matching ID
-    const user = await User.findOne({ _id: payload.ID }).exec();
-    if (!user) {
-      return res.status(404).send({
-        message: "User does not  exists",
-      });
+exports.loginWithGoogle = passport.authenticate("google", { scope: ["profile", "email"] });
+
+exports.googleCallback = passport.authenticate("google", { failureRedirect: "/login" });
+
+exports.redirectAfterLogin = (req, res) => {
+  res.redirect("/dashboard");
+};
+
+exports.logout = (req, res) => {
+  req.logout((err) => {
+    if (err) {
+      return next(err);
     }
-    // Step 3 - Update user verification status to true
-    user.verified = true;
-    await user.save();
-    return res.status(200).send({
-      message: "Account Verified",
-    });
-  } catch (err) {
-    return res.status(500).send(err);
-  }
+    res.redirect("/");
+  });
 };
