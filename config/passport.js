@@ -24,6 +24,8 @@ passport.use(
           _id: new mongoose.Types.ObjectId(),
           email: profile.emails[0].value,
           username: profile.displayName,
+          profilePicture: profile.photos[0].value,
+          authProvider: "google",
         });
 
         await newUser.save();
