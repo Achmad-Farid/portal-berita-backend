@@ -8,15 +8,18 @@ const passport = require("passport");
 require("./config/passport");
 
 db.then(() => {
-  console.log("koneksi database berhasil");
+  console.log("Koneksi database berhasil");
 }).catch(() => {
-  console.log("koneksi database gagal");
+  console.log("Koneksi database gagal");
 });
 
 const app = express();
-
 const PORT = process.env.PORT || 3000;
 
+// CORS configuration
+app.use(cors());
+
+// Session middleware
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
@@ -27,16 +30,25 @@ app.use(
       collectionName: "sessions",
     }),
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24,
+      secure: false, // Ubah ke true jika menggunakan HTTPS
+      maxAge: 1000 * 60 * 60 * 24, // 1 hari
     },
   })
 );
+
+// Passport middleware
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(cors());
+
+// Middleware untuk JSON dan URL encoded
 app.use(express.json());
 app.use(allRoutes);
 
+// Endpoint untuk memeriksa sesi
+app.get("/session", (req, res) => {
+  res.json({ user: req.user, session: req.session });
+});
+
 app.listen(PORT, () => {
-  console.log("server running on " + PORT);
+  console.log("Server running on " + PORT);
 });

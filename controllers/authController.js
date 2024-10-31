@@ -46,45 +46,22 @@ exports.signup = async (req, res) => {
 };
 
 // fungsi login
-exports.login = async (req, res) => {
-  const { username, password } = req.body;
-
-  try {
-    const user = await User.findOne({ username }).exec();
+exports.login = async (req, res, next) => {
+  passport.authenticate("local", (err, user, info) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: "Internal Server Error", error: err });
+    }
     if (!user) {
-      console.log("User not found:", username);
-      return res.status(404).send({
-        error: "Email atau Password salah",
-      });
+      return res.status(401).json({ success: false, message: info.message });
     }
-
-    if (user.authProvider === "google") {
-      return res.status(401).json({
-        message: "wrong auth provider",
-      });
-    }
-
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (passwordMatch) {
-      const user = {
-        id: user._id,
-        email: user.email,
-        username: user.username,
-        profilePicture: user.profilePicture,
-      };
-      console.log("Login successful for user:", username);
-      return res.status(200).json({
-        message: "Login Successfully",
-        user,
-      });
-    } else {
-      console.log("Incorrect password for user:", username);
-      return res.status(401).json({ error: "Email atau Password salah" });
-    }
-  } catch (err) {
-    console.error("Internal server error during login:", err);
-    return res.status(500).send({ message: "Internal Server Error", error: err });
-  }
+    req.logIn(user, (err) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: "Login failed", error: err });
+      }
+      // Jika berhasil login
+      return res.status(200).json({ success: true, message: "Login berhasil", user });
+    });
+  })(req, res, next);
 };
 
 exports.loginWithGoogle = passport.authenticate("google", { scope: ["profile", "email"] });
@@ -101,16 +78,9 @@ exports.googleCallback = (req, res, next) => {
       if (err) {
         return res.status(500).json({ success: false, message: "Login failed", error: err });
       }
-      return res.status(200).json({
-        success: true,
-        message: "Login successful",
-        user: {
-          id: user._id,
-          email: user.email,
-          username: user.username,
-          profilePicture: user.profilePicture,
-        },
-      });
+
+      // Redirect to the frontend after successful login
+      return res.redirect(`${frontend}`);
     });
   })(req, res, next);
 };
