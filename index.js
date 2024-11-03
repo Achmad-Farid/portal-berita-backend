@@ -37,6 +37,7 @@ app.use(
     cookie: {
       secure: true, // Ubah ke true jika menggunakan HTTPS
       maxAge: 1000 * 60 * 60 * 24, // 1 hari
+      sameSite: "none",
     },
   })
 );
