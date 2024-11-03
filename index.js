@@ -54,6 +54,6 @@ app.get("/session", (req, res) => {
   res.json({ user: req.user, session: req.session });
 });
 
-// app.listen(PORT, () => {
-//   console.log("Server running on " + PORT);
-// });
+app.listen(PORT, () => {
+  console.log("Server running on " + PORT);
+});
