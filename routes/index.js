@@ -4,7 +4,7 @@ const route = express.Router();
 const userRoute = require("./authRoute");
 
 route.get("/", (req, res) => {
-  res.status(200).send("Server is up and running!");
+  res.status(200).send("Server is up");
 });
 
 route.use("/auth", userRoute);
