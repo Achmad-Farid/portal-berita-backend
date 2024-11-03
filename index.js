@@ -35,8 +35,10 @@ app.use(
       collectionName: "sessions",
     }),
     cookie: {
-      secure: false, // Ubah ke true jika menggunakan HTTPS
+      secure: true, // Menggunakan true agar cookie hanya dikirim via HTTPS
+      httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24, // 1 hari
+      sameSite: "none", // Untuk mengizinkan cookie lintas domain
     },
   })
 );
