@@ -35,7 +35,7 @@ app.use(
       collectionName: "sessions",
     }),
     cookie: {
-      secure: true, // Menggunakan true agar cookie hanya dikirim via HTTPS
+      secure: false,
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24, // 1 hari
       sameSite: "none", // Untuk mengizinkan cookie lintas domain
