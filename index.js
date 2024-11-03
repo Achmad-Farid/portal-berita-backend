@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 3000;
 // CORS configuration
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://portal-berita-wh1t.vercel.app/"],
+    origin: ["http://localhost:5173", "https://portal-berita-wh1t.vercel.app"],
     credentials: true,
   })
 );
@@ -48,11 +48,6 @@ app.use(passport.session());
 // Middleware untuk JSON dan URL encoded
 app.use(express.json());
 app.use(allRoutes);
-
-// Endpoint untuk memeriksa sesi
-app.get("/session", (req, res) => {
-  res.json({ user: req.user, session: req.session });
-});
 
 app.listen(PORT, () => {
   console.log("Server running on " + PORT);
