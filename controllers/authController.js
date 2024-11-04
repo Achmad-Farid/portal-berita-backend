@@ -60,6 +60,10 @@ exports.login = async (req, res) => {
       return res.status(401).json({ success: false, message: "User not found" });
     }
 
+    if (user.authProvider === "google") {
+      return res.status(401).json({ success: false, message: "Wrong auth provider" });
+    }
+
     // Periksa kecocokan password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {

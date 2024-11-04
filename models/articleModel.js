@@ -5,35 +5,45 @@ const articleSchema = new mongoose.Schema(
   {
     title: {
       type: String,
-      required: true, 
-      trim: true, 
-    },
-    content: {
-      type: String,
       required: true,
+      trim: true,
     },
+    content: [
+      {
+        type: {
+          type: String,
+          enum: ["text", "image", "subtitle"],
+          required: true,
+        },
+        value: {
+          type: String,
+          required: true,
+        },
+        position: {
+          type: Number,
+          required: true,
+        },
+      },
+    ],
     author: {
       type: String,
       required: true,
     },
     tags: {
-      type: [String], 
-    },
-    imageUrl: {
-      type: String, 
+      type: [String],
     },
     publishedAt: {
-      type: Date, 
-      default: Date.now, 
+      type: Date,
+      default: Date.now,
     },
     status: {
       type: String,
-      enum: ["draft", "published"], 
+      enum: ["draft", "published"],
       default: "draft",
     },
     likes: {
       type: Number,
-      default: 0, // Default likes to 0
+      default: 0,
     },
     comments: [
       {
@@ -45,13 +55,11 @@ const articleSchema = new mongoose.Schema(
         },
       },
     ],
+    bookmarks: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   },
   {
-    timestamps: true, // Automatically add createdAt and updatedAt fields
+    timestamps: true,
   }
 );
 
-// Create the Article model
-const Article = mongoose.model("Article", articleSchema);
-
-module.exports = Article;
+module.exports = mongoose.model("Article", articleSchema);

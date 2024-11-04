@@ -10,27 +10,6 @@ exports.getAllArticles = async (req, res) => {
   }
 };
 
-// Create a new article
-exports.createArticle = async (req, res) => {
-  try {
-    const { title, content, author, tags, imageUrl, status } = req.body;
-
-    const newArticle = new Article({
-      title,
-      content,
-      author,
-      tags,
-      imageUrl,
-      status,
-    });
-
-    const savedArticle = await newArticle.save();
-    res.status(201).json(savedArticle);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-};
-
 // Get a single article by ID
 exports.getArticleById = async (req, res) => {
   try {
@@ -44,36 +23,57 @@ exports.getArticleById = async (req, res) => {
   }
 };
 
-// Update an article by ID
-exports.updateArticle = async (req, res) => {
+// Mendapatkan semua artikel yang di-bookmark oleh pengguna
+exports.getBookmarkedArticles = async (req, res) => {
   try {
-    const { title, content, author, tags, imageUrl, status } = req.body;
+    const { userId } = req.params; // Ambil userId dari parameter route
+    const bookmarkedArticles = await Article.find({ bookmarks: userId }).populate("bookmarks"); // Mengambil artikel berdasarkan userId di bookmarks
 
-    const article = await Article.findByIdAndUpdate(
-      req.params.id,
-      { title, content, author, tags, imageUrl, status },
-      { new: true } // Return the updated document
-    );
-
-    if (!article) {
-      return res.status(404).json({ message: "Article not found" });
-    }
-
-    res.status(200).json(article);
+    res.status(200).json(bookmarkedArticles);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 };
 
-// Delete an article by ID
-exports.deleteArticle = async (req, res) => {
+// Menandai artikel
+exports.bookmarkArticle = async (req, res) => {
   try {
-    const article = await Article.findByIdAndDelete(req.params.id);
+    const { userId } = req.body; // Pastikan userId dikirim dalam body permintaan
+    const article = await Article.findById(req.params.id);
+
     if (!article) {
       return res.status(404).json({ message: "Article not found" });
     }
-    res.status(200).json({ message: "Article deleted successfully" });
+
+    // Periksa apakah userId sudah ada di dalam bookmarks
+    if (!article.bookmarks.includes(userId)) {
+      article.bookmarks.push(userId); // Tambahkan userId ke bookmarks
+      await article.save();
+      return res.status(200).json({ message: "Article bookmarked successfully" });
+    } else {
+      return res.status(400).json({ message: "Article already bookmarked" });
+    }
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(400).json({ message: err.message });
+  }
+};
+
+// Menghapus penandaan artikel
+exports.unbookmarkArticle = async (req, res) => {
+  try {
+    const { userId } = req.body; // Pastikan userId dikirim dalam body permintaan
+    const article = await Article.findById(req.params.id);
+
+    if (!article) {
+      return res.status(404).json({ message: "Article not found" });
+    }
+
+    // Hapus userId dari bookmarks jika ada
+    article.bookmarks = article.bookmarks.filter((id) => id.toString() !== userId);
+    await article.save();
+
+    res.status(200).json({ message: "Article unbookmarked successfully" });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 };

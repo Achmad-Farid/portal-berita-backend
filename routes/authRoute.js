@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
+
 const authController = require("../controllers/authController.js");
-const articleController = require("../controllers/articleController.js");
 const validate = require("../middlewares/validator.js");
 const validateRequest = require("../middlewares/validateRequest.js");
 const isAuthenticated = require("../middlewares/authMiddlewares.js");
@@ -12,6 +12,5 @@ router.post("/login", validate.validateLogin, validateRequest, authController.lo
 router.get("/google", authController.loginWithGoogle);
 router.get("/google/callback", authController.googleCallback);
 router.get("/session-status", isAuthenticated.verifyToken);
-router.get("/articles", articleController.getAllArticles);
 
 module.exports = router;
