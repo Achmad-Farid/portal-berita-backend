@@ -11,8 +11,7 @@ router.post("/signup", validate.validateSignup, validateRequest, authController.
 router.post("/login", validate.validateLogin, validateRequest, authController.login);
 router.get("/google", authController.loginWithGoogle);
 router.get("/google/callback", authController.googleCallback);
-router.get("/logout", authController.logout);
-router.get("/session-status", isAuthenticated);
+router.get("/session-status", isAuthenticated.verifyToken);
 router.get("/articles", articleController.getAllArticles);
 
 module.exports = router;

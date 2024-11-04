@@ -4,6 +4,7 @@ const User = require("../models/userModel.js");
 const bcrypt = require("bcrypt");
 const passport = require("passport");
 const frontend = process.env.FRONTEND;
+const jwt = require("jsonwebtoken");
 
 // fungsi register
 exports.signup = async (req, res) => {
@@ -45,56 +46,60 @@ exports.signup = async (req, res) => {
   }
 };
 
-// fungsi login
-exports.login = async (req, res, next) => {
-  passport.authenticate("local", (err, user, info) => {
-    if (err) {
-      return res.status(500).json({ success: false, message: "Internal Server Error", error: err });
-    }
+// Fungsi Login dengan JWT
+exports.login = async (req, res) => {
+  const { identifier, password } = req.body; // Gunakan `identifier` untuk email atau username
+
+  try {
+    // Cari pengguna berdasarkan email atau username
+    const user = await User.findOne({
+      $or: [{ email: identifier }, { username: identifier }],
+    }).exec();
+
     if (!user) {
-      return res.status(401).json({ success: false, message: info.message });
+      return res.status(401).json({ success: false, message: "User not found" });
     }
-    req.logIn(user, (err) => {
-      if (err) {
-        return res.status(500).json({ success: false, message: "Login failed", error: err });
-      }
-      // Jika berhasil login
-      return res.status(200).json({ success: true, message: "Login berhasil", user });
+
+    // Periksa kecocokan password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ success: false, message: "Invalid password" });
+    }
+
+    // Buat token JWT
+    const token = jwt.sign({ id: user._id, email: user.email, username: user.username, profilePicture: user.profilePicture }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
     });
-  })(req, res, next);
+
+    return res.status(200).json({
+      success: true,
+      message: "Login berhasil",
+      token,
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: "Internal Server Error", error: err });
+  }
 };
 
+// Endpoint untuk login dengan Google
 exports.loginWithGoogle = passport.authenticate("google", { scope: ["profile", "email"] });
 
+// Callback setelah login dengan Google berhasil
 exports.googleCallback = (req, res, next) => {
-  passport.authenticate("google", (err, user, info) => {
+  passport.authenticate("google", async (err, user) => {
     if (err) {
       return res.status(500).json({ success: false, message: "Server error", error: err });
     }
     if (!user) {
       return res.status(401).json({ success: false, message: "Login failed or user not found" });
     }
-    req.logIn(user, (err) => {
-      if (err) {
-        return res.status(500).json({ success: false, message: "Login failed", error: err });
-      }
 
-      // Redirect to the frontend after successful login
-      return res.redirect(`${frontend}`);
+    // Buat token JWT
+    const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, {
+      expiresIn: "1h",
     });
+
+    // Redirect ke frontend dengan token sebagai query string
+    res.redirect(`${frontend}?token=${token}`);
   })(req, res, next);
-};
-
-exports.logout = (req, res) => {
-  req.logout((err) => {
-    if (err) {
-      return res.status(500).json({ success: false, message: "Logout failed", error: err });
-    }
-    req.session.destroy((err) => {
-      if (err) {
-        return res.status(500).json({ success: false, message: "Error destroying session", error: err });
-      }
-      res.status(200).json({ success: true, message: "Logout successful" });
-    });
-  });
 };

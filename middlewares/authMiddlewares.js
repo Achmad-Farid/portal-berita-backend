@@ -1,18 +1,19 @@
-module.exports = (req, res) => {
-  console.log("Session Data:", req.session);
-  console.log("User Data:", req.user);
+const jwt = require("jsonwebtoken");
 
-  if (req.isAuthenticated()) {
-    res.status(200).json({
-      success: true,
-      user: {
-        id: req.user._id,
-        email: req.user.email,
-        username: req.user.username,
-        profilePicture: req.user.profilePicture,
-      },
-    });
-  } else {
-    res.status(401).json({ success: false, message: "User not authenticated" });
+// Middleware untuk Verifikasi JWT
+exports.verifyToken = (req, res, next) => {
+  const token = req.headers["authorization"]?.split(" ")[1];
+
+  if (!token) {
+    return res.status(403).json({ success: false, message: "No token provided" });
   }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ success: false, message: "Failed to authenticate token" });
+    }
+
+    req.userId = decoded.id; // Dekode data pengguna
+    next();
+  });
 };
