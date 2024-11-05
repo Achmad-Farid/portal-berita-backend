@@ -99,7 +99,7 @@ exports.googleCallback = (req, res, next) => {
     }
 
     // Buat token JWT
-    const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, {
+    const token = jwt.sign({ id: user._id, email: user.email, username: user.username, profilePicture: user.profilePicture }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
 
