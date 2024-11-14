@@ -2,31 +2,25 @@ const Article = require("../models/articleModel");
 
 // Controller untuk mendapatkan semua artikel
 exports.getAllArticles = async (req, res) => {
-  // Menyediakan default value untuk page dan limit jika tidak disertakan
   const { page = 1, limit = 10 } = req.query;
 
   try {
-    // Menghitung total artikel yang sudah dipublikasikan
     const totalPublishedArticles = await Article.countDocuments({ status: "published" });
 
-    // Mengambil artikel berdasarkan status "published", dengan limit dan skip untuk pagination
     const articles = await Article.find({ status: "published" })
-      .sort({ createdAt: -1 }) // Mengurutkan berdasarkan tanggal pembuatan
-      .limit(parseInt(limit)) // Membatasi jumlah artikel per halaman
-      .skip((page - 1) * limit) // Menentukan jumlah artikel yang dilewati berdasarkan halaman
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit))
+      .skip((page - 1) * limit)
       .exec();
 
-    // Menghitung jumlah total halaman berdasarkan jumlah artikel dan limit
     const totalPages = Math.ceil(totalPublishedArticles / limit);
 
-    // Mengembalikan respons dalam format JSON
     res.status(200).json({
       articles,
       totalPages,
-      currentPage: parseInt(page), // Halaman yang sedang aktif
+      currentPage: parseInt(page),
     });
   } catch (err) {
-    // Menangani error jika terjadi kesalahan dalam proses
     res.status(500).json({ message: err.message });
   }
 };
