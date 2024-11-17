@@ -102,7 +102,7 @@ exports.updateUserRole = async (req, res) => {
     }
 
     // Validasi role yang diberikan
-    if (!["admin", "user", "journalist"].includes(role)) {
+    if (!["user", "journalist"].includes(role)) {
       return res.status(400).json({ message: "Invalid role." });
     }
 
@@ -119,63 +119,82 @@ exports.updateUserRole = async (req, res) => {
   }
 };
 
-// Fungsi untuk mendapatkan semua pengguna dengan pagination
-exports.getAllUsers = async (req, res) => {
-  const { page = 1, limit = 10 } = req.query; // Ambil parameter page dan limit dari query string
+// Fungsi untuk menghapus pengguna
+exports.deleteUser = async (req, res) => {
+  const { userId } = req.params; // ID pengguna dari parameter URL
+
+  // Validasi apakah ID adalah ObjectId yang valid
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    return res.status(400).json({ message: "Invalid user ID format" });
+  }
 
   try {
-    // Hitung total pengguna
-    const totalUsers = await User.countDocuments();
+    // Cari dan hapus pengguna berdasarkan ID
+    const user = await User.findByIdAndDelete(userId);
 
-    // Ambil pengguna berdasarkan halaman dan limit
-    const users = await User.find()
-      .limit(parseInt(limit)) // Batasi jumlah hasil sesuai dengan limit
-      .skip((page - 1) * limit) // Lewati sejumlah hasil berdasarkan halaman
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ message: "User deleted successfully", user });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting user", error: error.message });
+  }
+};
+
+// Fungsi untuk mendapatkan semua pengguna dengan pagination
+exports.getAllUsers = async (req, res) => {
+  const { page = 1, limit = 10 } = req.query;
+
+  try {
+    // Hitung total pengguna yang bukan admin
+    const totalUsers = await User.countDocuments({ role: { $ne: "admin" } });
+
+    // Ambil pengguna berdasarkan halaman dan limit, kecuali admin
+    const users = await User.find({ role: { $ne: "admin" } })
+      .limit(parseInt(limit))
+      .skip((page - 1) * limit)
       .exec();
 
     // Hitung total halaman
     const totalPages = Math.ceil(totalUsers / limit);
 
-    // Kirimkan respons dengan data pengguna dan informasi pagination
     res.status(200).json({
       users,
       totalPages,
       currentPage: parseInt(page),
     });
   } catch (err) {
-    res.status(500).json({ message: err.message }); // Kirimkan error jika terjadi kesalahan
+    res.status(500).json({ message: err.message });
   }
 };
 
-/// Fungsi untuk mendapatkan pengguna berdasarkan role dengan pagination
 exports.getUsersByRole = async (req, res) => {
-  const { role } = req.params; // Ambil role dari parameter
-  const { page = 1, limit = 10 } = req.query; // Ambil page dan limit dari query string
+  const { role } = req.params;
+  const { page = 1, limit = 10 } = req.query;
 
   try {
-    // Hitung total pengguna dengan role tertentu
-    const totalUsers = await User.countDocuments({ role });
+    // Case-insensitive search for role, excluding admin
+    const query = { role: { $regex: new RegExp(`^${role}$`, "i"), $ne: "admin" } };
 
-    // Cari pengguna dengan role tertentu berdasarkan halaman dan limit
-    const users = await User.find({ role })
-      .limit(parseInt(limit)) // Batasi jumlah hasil sesuai dengan limit
-      .skip((page - 1) * limit) // Lewati sejumlah hasil berdasarkan halaman
+    const totalUsers = await User.countDocuments(query);
+    const users = await User.find(query)
+      .limit(parseInt(limit))
+      .skip((parseInt(page) - 1) * parseInt(limit))
       .exec();
-
-    // Hitung total halaman
-    const totalPages = Math.ceil(totalUsers / limit);
 
     if (users.length === 0) {
       return res.status(404).json({ message: `No users found with role: ${role}` });
     }
 
-    // Kirimkan respons dengan data pengguna dan informasi pagination
+    const totalPages = Math.ceil(totalUsers / limit);
+
     res.status(200).json({
       users,
       totalPages,
       currentPage: parseInt(page),
     });
   } catch (err) {
-    res.status(500).json({ message: err.message }); // Kirimkan error jika terjadi kesalahan
+    res.status(500).json({ message: err.message });
   }
 };

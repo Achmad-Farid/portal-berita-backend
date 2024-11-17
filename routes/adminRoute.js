@@ -9,6 +9,8 @@ router.patch("/users/:userId/role", adminController.updateUserRole);
 router.delete("/articles/:id", adminController.deleteArticle);
 
 router.get("/users", adminController.getAllUsers);
+router.delete("/users/delete/:userId", adminController.deleteUser);
+router.patch("/users/role/:userId", adminController.updateUserRole);
 router.get("/users/role/:role", adminController.getUsersByRole);
 
 module.exports = router;

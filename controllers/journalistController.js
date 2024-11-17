@@ -3,33 +3,33 @@ const Article = require("../models/articleModel");
 exports.myArticles = async (req, res) => {
   try {
     // Parsing nilai halaman dan limit dari query parameter
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const startIndex = (page - 1) * limit;
+    const { page = 1, limit = 10 } = req.query;
 
     // Mendapatkan username dari pengguna yang sedang login
     const authorUsername = req.user.username;
 
-    // Mendapatkan total jumlah artikel yang dipublikasikan dan sesuai dengan author
-    const totalPublishedArticles = await Article.countDocuments({
-      status: "published",
+    // Mendapatkan total jumlah artikel yang dipublikasikan oleh pengguna
+    const totalArticles = await Article.countDocuments({
       author: authorUsername,
     });
 
-    // Menemukan artikel yang dipublikasikan dan sesuai author dengan pagination
+    // Menemukan artikel yang dipublikasikan oleh pengguna dengan pagination
     const articles = await Article.find({
       author: authorUsername,
     })
       .sort({ createdAt: -1 })
-      .skip(startIndex)
-      .limit(limit);
+      .limit(parseInt(limit))
+      .skip((page - 1) * parseInt(limit))
+      .exec();
+
+    // Menghitung total halaman
+    const totalPages = Math.ceil(totalArticles / limit);
 
     // Mengembalikan hasil dalam format JSON
     res.status(200).json({
-      total: totalPublishedArticles,
-      page: page,
-      pages: Math.ceil(totalPublishedArticles / limit),
-      articles: articles,
+      articles,
+      totalPages,
+      currentPage: parseInt(page),
     });
   } catch (err) {
     // Mengirimkan error jika terjadi kesalahan
