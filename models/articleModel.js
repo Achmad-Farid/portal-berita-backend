@@ -41,7 +41,11 @@ const articleSchema = new mongoose.Schema(
       enum: ["under review", "published"],
       default: "draft",
     },
-    likes: {
+    views: {
+      type: Number,
+      default: 0,
+    },
+    totalViews: {
       type: Number,
       default: 0,
     },

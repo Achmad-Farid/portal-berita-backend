@@ -15,7 +15,7 @@ route.get("/", (req, res) => {
 
 route.use("/auth", authRoute);
 route.use("/articles", articleRoute);
-route.use("/user", userRoute);
+route.use("/user", authMiddleware, userRoute);
 route.use("/admin", authMiddleware, authorizeRole("admin"), adminRoute);
 route.use("/journalist", authMiddleware, authorizeRole("journalist"), journalistRoute);
 

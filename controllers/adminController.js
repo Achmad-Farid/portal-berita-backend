@@ -1,5 +1,6 @@
 const Article = require("../models/articleModel");
 const User = require("../models/userModel.js");
+const mongoose = require("mongoose");
 
 // Controller untuk mendapatkan semua artikel
 exports.getAllArticles = async (req, res) => {
@@ -51,6 +52,52 @@ exports.getUnderArticles = async (req, res) => {
   }
 };
 
+// Get a single article by ID
+exports.getArticleById = async (req, res) => {
+  try {
+    const article = await Article.findById(req.params.id);
+    if (!article) {
+      return res.status(404).json({ message: "Article not found" });
+    }
+    res.status(200).json(article);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Controller untuk mencari artikel berdasarkan query
+exports.searchArticle = async (req, res) => {
+  const { page = 1, limit = 10, query } = req.query;
+
+  console.log(query);
+  try {
+    // Membangun query pencarian
+    const searchQuery = query
+      ? {
+          $or: [{ title: { $regex: query, $options: "i" } }, { author: { $regex: query, $options: "i" } }, { content: { $elemMatch: { value: { $regex: query, $options: "i" } } } }, { tags: { $in: [query] } }],
+        }
+      : {};
+
+    const totalArticles = await Article.countDocuments(searchQuery);
+
+    const articles = await Article.find(searchQuery)
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit))
+      .skip((page - 1) * limit)
+      .exec();
+
+    const totalPages = Math.ceil(totalArticles / limit);
+
+    res.status(200).json({
+      articles,
+      totalPages,
+      currentPage: parseInt(page),
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 // Publish article (Admin only)
 exports.publishArticle = async (req, res) => {
   try {
@@ -61,11 +108,29 @@ exports.publishArticle = async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
-    const article = await Article.findByIdAndUpdate(
-      articleId,
-      { status: "published", publishedAt: new Date() }, // Set status to published
-      { new: true }
-    );
+    const article = await Article.findByIdAndUpdate(articleId, { status: "published", publishedAt: new Date() }, { new: true });
+
+    if (!article) {
+      return res.status(404).json({ message: "Article not found" });
+    }
+
+    res.status(200).json(article);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+// Publish article (Admin only)
+exports.unPublishArticle = async (req, res) => {
+  try {
+    const { articleId } = req.params;
+
+    // Pastikan user adalah admin
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const article = await Article.findByIdAndUpdate(articleId, { status: "under review", publishedAt: new Date() }, { new: true });
 
     if (!article) {
       return res.status(404).json({ message: "Article not found" });
