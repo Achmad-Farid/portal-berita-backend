@@ -7,5 +7,6 @@ router.get("/tag", articleController.getArticlesByTag);
 router.get("/detail/:id", articleController.getArticleById);
 router.get("/search", articleController.searchArticle);
 router.get("/popular", articleController.popularArticles);
+router.get("/category/:categoryOrTag", articleController.getArticlesByCategoryOrTag);
 
 module.exports = router;
