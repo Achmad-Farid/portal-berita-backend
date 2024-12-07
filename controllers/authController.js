@@ -88,22 +88,32 @@ exports.login = async (req, res) => {
 // Endpoint untuk login dengan Google
 exports.loginWithGoogle = passport.authenticate("google", { scope: ["profile", "email"] });
 
-// Callback setelah login dengan Google berhasil
 exports.googleCallback = (req, res, next) => {
   passport.authenticate("google", async (err, user) => {
-    if (err) {
-      return res.status(500).json({ success: false, message: "Server error", error: err });
-    }
-    if (!user) {
-      return res.status(401).json({ success: false, message: "Login failed or user not found" });
-    }
+    const frontend = process.env.FRONTEND_URL || "http://localhost:3000"; // Definisikan URL frontend
 
-    // Buat token JWT
-    const token = jwt.sign({ id: user._id, email: user.email, username: user.username, profilePicture: user.profilePicture, role: user.role }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
+    try {
+      if (err) {
+        console.error("Authentication Error:", err);
+        return res.redirect(`${frontend}/error?message=${encodeURIComponent("Server error during login")}`);
+      }
+      if (!user) {
+        console.warn("User not found or login failed");
+        return res.redirect(`${frontend}/error?message=${encodeURIComponent("Login failed or user not found")}`);
+      }
 
-    // Redirect ke frontend dengan token sebagai query string
-    res.redirect(`${frontend}?token=${token}`);
+      // Buat token JWT
+      const token = jwt.sign(
+        { id: user._id, email: user.email, username: user.username, profilePicture: user.profilePicture, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: "24h" } // Perpanjang waktu kadaluarsa
+      );
+
+      // Redirect ke frontend dengan token
+      res.redirect(`${frontend}?token=${token}`);
+    } catch (error) {
+      console.error("Unexpected Error:", error);
+      return res.redirect(`${frontend}/error?message=${encodeURIComponent("Unexpected error occurred")}`);
+    }
   })(req, res, next);
 };
