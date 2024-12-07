@@ -133,7 +133,7 @@ exports.searchArticle = async (req, res) => {
 
 exports.popularArticles = async (req, res) => {
   try {
-    const popularArticles = await Article.find().sort({ views: -1, totalViews: -1 }).limit(10);
+    const popularArticles = await Article.find({ status: "published" }).sort({ views: -1, totalViews: -1 }).limit(10);
 
     res.status(200).json(popularArticles);
   } catch (error) {
