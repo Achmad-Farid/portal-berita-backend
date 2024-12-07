@@ -27,62 +27,22 @@ This backend is built using **Express** and provides a RESTful API for the Porta
 
 4. The API will be available at `http://localhost:5000`.
 
-## Protected Routes (JWT Required)
+### Live Demo
+
+You can also view the live demo of the API at [Portal Berita Backend](https://portal-berita-backend.vercel.app/).
+
+### Protected Routes (JWT Required)
 - **Admin**: `/admin/*`
 - **Journalist**: `/journalist/*`
 - **User**: `/user/*`
 
 ## API Routes Documentation
 
-### Authentication Routes (`/auth`)
-
-- **POST /signup**  
-  Registers a new user.
-  - **Request Body**:
-    ```json
-    {
-      "email": "user@example.com",
-      "username": "user123",
-      "password": "password123"
-    }
-    ```
-  - **Response** (Success):
-    ```json
-    {
-      "message": "Pendaftaran user@example.com Berhasil"
-    }
-    ```
-
-- **POST /login**  
-  Logs in a user and returns a JWT token.
-  - **Request Body**:
-    ```json
-    {
-      "identifier": "user@example.com",
-      "password": "password123"
-    }
-    ```
-  - **Response** (Success):
-    ```json
-    {
-      "success": true,
-      "message": "Login berhasil",
-      "token": "JWT_TOKEN_HERE"
-    }
-    ```
-  - **Response** (Error):
-    ```json
-    {
-      "success": false,
-      "message": "Invalid password"
-    }
-    ```
-
-- **GET /google**  
-  Initiates Google OAuth login.
-
-- **GET /google/callback**  
-  Handles the Google OAuth callback and provides a JWT token.
+### Authentication Routes (auth)
+- `POST /signup`: Sign up a new user
+- `POST /login`: Log in and receive a JWT token
+- `GET /google`: Login via Google OAuth
+- `GET /google/callback`: Google OAuth callback
 
 ### Article Routes (article)
 - `GET /all`: Get all articles
