@@ -90,7 +90,7 @@ exports.loginWithGoogle = passport.authenticate("google", { scope: ["profile", "
 
 exports.googleCallback = (req, res, next) => {
   passport.authenticate("google", async (err, user) => {
-    const frontend = process.env.FRONTEND_URL || "http://localhost:3000"; // Definisikan URL frontend
+    const frontend = process.env.FRONTEND || "http://localhost:3000"; // Definisikan URL frontend
 
     try {
       if (err) {
